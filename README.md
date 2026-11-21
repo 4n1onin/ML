@@ -7,14 +7,17 @@
 
 Fill in the following information.
 
-- **Project Title:** [Insert project title]
-- **Group Name:** [Insert group name]
+- **Project Title:** Credit risk modeling
+- **Group Name:** FMGRxGFF
 - **Group Members:**  
-  - Student 1 – [Name]  
-  - Student 2 – [Name]  
-  - Student 3 – [Name]
+  - Student 1 – Lino Lucas
+  - Student 2 – Quentin Abherve Gueguen  
+  - Student 3 – Marc Fabrègue
+  - Student 4 - Melina Placide
+  - Student 5 - Gabin Botrel
+  - Student 6 - Antonin Lozach
 
-- **Course Name:** AI In Finance
+- **Course Name:** Introduction to machine learning
 - **Instructor:** Nicolas De Roux & Mohamed EL FAKIR
 - **Submission Date:** [Insert date]
 
