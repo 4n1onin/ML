@@ -1,6 +1,5 @@
 # Credit risk modeling
 
-⚠️ Replace this title with the **name of your project**
 
 ---
 
