@@ -36,7 +36,15 @@ Include:
 
 ✏️ **Write your description below:**
 
-[Replace this text with your project description]
+Notre projet porte sur le risque de crédit : peut-on prédire si un client ne remboursera pas sa carte de crédit le mois suivant ? Nous utilisons le jeu de données Default of Credit Card Clients de l'UCI. Il décrit 30 000 clients d'une banque taïwanaise en 2005. Pour chaque client, on dispose du plafond de crédit, de quelques infos (sexe, âge, niveau d'études, situation familiale) et de six mois d'historique : retards de paiement, montants facturés et montants remboursés.
+
+Le contexte est important : au milieu des années 2000, Taïwan a connu une crise des cartes de crédit. Les banques avaient distribué beaucoup de crédit sans vérifier assez la solvabilité des clients, et les impayés ont explosé. Le sujet nous intéresse parce que c'est un cas concret où une mauvaise décision coûte vite très cher. Il pose aussi un vrai défi de machine learning : seuls 22 % des clients environ font défaut, donc les classes sont déséquilibrées. Un modèle qui prédit « pas de défaut » pour tout le monde aurait 78 % de bonnes réponses tout en étant inutile.
+
+Plusieurs acteurs profiteraient d'une bonne solution :
+
+Les banques, qui pourraient repérer plus tôt les clients à risque, ajuster les plafonds et réduire leurs pertes.
+Les régulateurs, pour qui la maîtrise du risque de crédit compte pour la stabilité financière.
+Les clients eux-mêmes, qui pourraient être contactés avant de se retrouver surendettés.
 
 ---
 
@@ -57,9 +65,15 @@ Example goals:
 - Detect sentiment in text reviews
 - Forecast electricity consumption
 
-✏️ **Write your project goal below:**
+Il s'agit d'un problème de classification binaire : à partir des caractéristiques du client et de son historique sur six mois, prédire s'il fera défaut le mois suivant (1 = défaut, 0 = pas de défaut). Le modèle doit aussi donner une probabilité de défaut, pour que la banque puisse classer ses clients du moins risqué au plus risqué.
 
-[Replace this text with the goal of your project]
+Pour y arriver, nous partirons d'un modèle simple de référence, la régression logistique. Nous le comparerons ensuite à des modèles plus puissants : random forest, XGBoost et un petit réseau de neurones. Pour gérer le déséquilibre des classes, nous testerons la pondération des classes, le rééchantillonnage et l'ajustement du seuil de décision.
+
+Une solution réussie, c'est :
+
+De bonnes performances sur les bonnes métriques. On regardera l'AUC, le F1-score et la matrice de confusion plutôt que l'accuracy, et surtout un bon rappel sur les défauts : rater un client qui fera défaut coûte plus cher à la banque qu'une fausse alerte.
+Une nette amélioration par rapport à la régression logistique.
+Un modèle interprétable. Grâce à l'importance des variables et à SHAP, on veut pouvoir expliquer quelles variables pèsent le plus dans le risque. On s'attend à ce que les retards de paiement récents et le taux d'utilisation du crédit ressortent en premier.
 
 ---
 
