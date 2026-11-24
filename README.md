@@ -183,6 +183,8 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 | Variables sensibles | `SEX`, `AGE`, `MARRIAGE` sont des caractéristiques protégées | Modèles comparés avec et sans ces variables |
 
 
+---
+
 # 6. Data Preprocessing
 
 📌 **Instructions:**  
