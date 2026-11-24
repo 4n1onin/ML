@@ -187,20 +187,114 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 
 # 6. Data Preprocessing
 ---
-📌 **Instructions:**  
-Explain the preprocessing steps applied before modeling.
+# 6. Data Preprocessing
 
-Examples:
+Toutes les étapes sont codées dans [`src/preprocessing.py`](src/preprocessing.py). Tous les notebooks utilisent ce même fichier, donc chaque modèle est entraîné sur des données préparées de façon identique.
 
-- Handling missing values
-- Removing duplicates
-- Encoding categorical variables
-- Normalizing or scaling features
-- Feature engineering
+## 6.1 Chargement et mise en forme
 
-For each step briefly explain **why it was necessary**.
+- **Lecture du fichier :** le fichier UCI a **deux lignes d'en-tête** (`X1 … X23`, puis les vrais noms). On lit donc les noms sur la 2ᵉ ligne (`header=1`).
+- **Renommage :** `PAY_0` → `PAY_1` et `default payment next month` → `DEFAULT`.
+  *Pourquoi :* dans le fichier d'origine, la série de retards commence à `PAY_0` mais les montants commencent à `BILL_AMT1` et `PAY_AMT1`, alors que ces trois colonnes portent sur le même mois (septembre 2005). Le renommage aligne les numéros et évite les erreurs.
+- **Suppression de `ID` :** *Pourquoi :* un numéro de client ne contient aucune information sur le risque. Le garder pourrait faire apprendre au modèle une corrélation artificielle.
 
-✏️ **Describe your preprocessing steps here**
+## 6.2 Valeurs manquantes
+
+Le dataset ne contient **aucune valeur manquante**, donc aucune imputation n'est nécessaire.
+Les seules valeurs manquantes possibles apparaissent lors de la création de ratios (division par une facture nulle). Elles sont traitées directement dans le calcul (voir 6.6).
+
+## 6.3 Doublons
+
+**35 lignes** sont identiques sur toutes les variables (avec des `ID` différents). Elles sont supprimées, ce qui laisse 29 965 clients.
+*Pourquoi :* si une même ligne se retrouve à la fois dans le train et dans le test, le modèle est évalué sur un client qu'il a déjà vu, ce qui gonfle artificiellement les scores (**fuite de données**). Retirer 0,1 % des données ne coûte rien.
+
+## 6.4 Nettoyage des variables catégorielles
+
+| Variable | Problème | Traitement |
+|------|------|------|
+| `EDUCATION` | Codes 0, 5 et 6 non documentés (345 clients) | Regroupés avec 4 = « autres » |
+| `MARRIAGE` | Code 0 non documenté (54 clients) | Regroupé avec 3 = « autres » |
+
+*Pourquoi :* ces codes n'ont pas de signification connue et concernent très peu de clients. Des catégories aussi petites seraient mal apprises par les modèles et rendraient les résultats instables.
+
+**Valeurs conservées volontairement :**
+- **Codes -2 et 0 de `PAY_x`** : ils ont un sens (pas de consommation / paiement minimum). On garde `PAY_x` comme variable **ordinale** de -2 à 8, car l'ordre « payé → minimum → retard » reflète un risque croissant.
+- **Montants `BILL_AMT` négatifs** (1 930 clients) : ce sont des soldes créditeurs (le client a trop payé), donc une vraie information sur son comportement, pas une erreur.
+- **Valeurs extrêmes** : elles sont plausibles au vu des plafonds (jusqu'à 1 000 000 NT$). On les transforme (6.7) au lieu de les supprimer, pour ne pas perdre les clients aux gros montants.
+
+## 6.5 Encodage des variables catégorielles
+
+`SEX`, `EDUCATION` et `MARRIAGE` sont transformées par **one-hot encoding** (une colonne 0/1 par catégorie, en retirant la première pour éviter la redondance).
+*Pourquoi :* ces variables sont **nominales**. Leurs codes sont des étiquettes, pas des grandeurs. Laisser `MARRIAGE` en 1/2/3 ferait croire à un modèle linéaire que « célibataire (2) » vaut deux fois « marié (1) ».
+Les `PAY_x`, eux, ne sont **pas** encodés en one-hot : leur ordre a un sens et doit être conservé.
+
+## 6.6 Feature engineering
+
+On crée 5 variables métier qui résument le comportement du client sur les 6 mois.
+
+| Nouvelle variable | Calcul | Ce qu'elle mesure |
+|------|------|------|
+| `UTIL_MEAN` | Moyenne de `BILL_AMTi / LIMIT_BAL` sur 6 mois | Taux d'utilisation moyen du crédit |
+| `UTIL_LAST` | `BILL_AMT1 / LIMIT_BAL` | Taux d'utilisation le plus récent |
+| `PAY_RATIO_MEAN` | Moyenne de `PAY_AMTi / BILL_AMT(i+1)`, bornée entre 0 et 1 | Part de la facture précédente effectivement remboursée |
+| `N_MONTHS_LATE` | Nombre de mois avec `PAY_x` > 0 | Fréquence des retards |
+| `MAX_DELAY` | Plus grand retard observé sur 6 mois | Gravité du pire retard |
+
+*Pourquoi :* les montants bruts sont peu liés au défaut (les corrélations des `BILL_AMT` sont proches de 0). Ce qui compte pour une banque, c'est **le montant rapporté au plafond** et **la part effectivement remboursée**.
+Ces variables ont aussi un sens économique clair, ce qui facilite l'interprétation.
+
+**Résultat :** `N_MONTHS_LATE` atteint une corrélation de **+0,40** avec le défaut, plus que n'importe quelle variable d'origine (`PAY_1` : +0,32). Le taux de défaut passe de **12 %** pour les clients jamais en retard à **70 %** pour ceux en retard les 6 mois.
+
+*Détail technique :* `PAY_AMTi` rembourse la facture du mois précédent, d'où le rapport à `BILL_AMT(i+1)`. Quand cette facture est nulle ou négative, il n'y a rien à rembourser et le ratio vaut 1.
+
+## 6.7 Séparation train / test
+
+- **80 % train (23 972 clients) / 20 % test (5 993 clients)**, avec `random_state=42` pour que les résultats soient reproductibles.
+- **Split stratifié** sur `DEFAULT` : le taux de défaut est de 22,1 % dans les deux échantillons.
+*Pourquoi :* sans stratification, le test pourrait contenir par hasard plus ou moins de défauts que la réalité, ce qui fausserait l'évaluation.
+- Le **test n'est plus utilisé** jusqu'à l'évaluation finale. Le réglage des hyperparamètres et le choix du seuil se font par **validation croisée stratifiée à 5 plis** sur le train.
+
+## 6.8 Transformation et mise à l'échelle
+
+Cette étape concerne la **régression logistique** et le **réseau de neurones (MLP)**. Random Forest et XGBoost utilisent les données sans transformation.
+
+1. **Transformation logarithmique** `sign(x) · log(1 + |x|)` sur `LIMIT_BAL`, `BILL_AMT1–6` et `PAY_AMT1–6`.
+   *Pourquoi :* ces montants sont très asymétriques (asymétrie jusqu'à 14,7). Le log réduit l'effet des valeurs extrêmes. La version avec `sign` permet de traiter aussi les montants négatifs.
+2. **Standardisation** (`StandardScaler`) : chaque variable est ramenée à une moyenne de 0 et un écart-type de 1.
+   *Pourquoi :* la régression logistique régularisée et le MLP sont sensibles à l'échelle. Sans standardisation, `LIMIT_BAL` (en centaines de milliers) écraserait `AGE` (en dizaines). Pour le MLP, c'est aussi nécessaire pour que l'entraînement converge.
+   Les arbres de décision, eux, ne comparent les valeurs qu'à des seuils : l'échelle ne change rien pour eux.
+
+⚠️ **Le scaler est ajusté uniquement sur le train**, puis appliqué au test. Il est placé dans un `Pipeline` avec le modèle, et donc ré-ajusté dans chaque pli de la validation croisée.
+*Pourquoi :* calculer la moyenne et l'écart-type sur toutes les données ferait passer de l'information du test dans l'entraînement (fuite de données).
+
+## 6.9 Traitement du déséquilibre des classes
+
+Avec 22,1 % de défauts, un modèle non corrigé privilégie la classe majoritaire et **rate la plupart des défauts**. On corrige ce déséquilibre **uniquement pendant l'entraînement** :
+
+| Méthode | Modèles | Principe |
+|------|------|------|
+| `class_weight="balanced"` | Régression logistique, Random Forest | Une erreur sur un défaut pèse environ 3,5 fois plus dans la fonction de perte |
+| `scale_pos_weight ≈ 3,52` | XGBoost | Même principe (rapport non-défauts / défauts du train) |
+| SMOTE *(variante testée)* | Tous | Création de défauts synthétiques, appliquée **dans chaque pli** de validation croisée |
+| Ajustement du seuil de décision | Tous | Seuil choisi pour maximiser le F1, au lieu de 0,5 |
+
+⚠️ **Le test n'est jamais rééquilibré.**
+*Pourquoi :* le modèle sera utilisé sur une population réelle avec environ 22 % de défauts. Il doit être évalué dans ces conditions. Rééquilibrer **avant** le split (par exemple en dupliquant des défauts) placerait des copies des mêmes clients dans le train et le test, et produirait des scores artificiellement élevés.
+
+## 6.10 Résultat du prétraitement
+
+| | Avant | Après |
+|------|------|------|
+| Clients | 30 000 | 29 965 |
+| Variables explicatives | 23 | 28 (23 d'origine + 5 construites) |
+| Colonnes en entrée des modèles (LR / MLP) | — | 31 (après one-hot encoding) |
+| Train / Test | — | 23 972 / 5 993 (22,1 % de défauts dans chacun) |
+
+Pour lancer le prétraitement seul :
+
+```bash
+python src/preprocessing.py data/default_of_credit_card_clients.xls
+```
 
 ---
 
