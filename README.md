@@ -83,105 +83,105 @@ Le projet est un problème d'apprentissage supervisé : pour chaque client, on c
 
 # 5. Dataset Description
 
-📌 **Instructions:**  
-Describe the dataset used in the project.
-
-❗ Do **not simply name the dataset**. Instead explain its structure and contents.
-
----
-
 ## Dataset Overview
 
-Provide general information about the dataset.
-
-Fill in:
-
-- **Number of samples:**  
-- **Number of features:**  
-- **Target variable:**  
-- **Data source:** [Link if applicable]
-
----
+- **Number of samples :** 30 000 clients (29 965 après suppression des doublons)
+- **Number of features :** 23 variables explicatives, 1 identifiant (`ID`) et 1 variable cible
+- **Target variable :** `default payment next month`
+- **Data source :** [UCI Machine Learning Repository – Default of Credit Card Clients](https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients) (Yeh & Lien, 2009)
+- **Contexte :** clients d'une banque taïwanaise, observés d'avril à septembre 2005. Les montants sont en dollars taïwanais (NT$).
 
 ## Feature Description
 
-📌 **Instructions:**  
-List and describe the most important variables.
+Les 23 variables explicatives se répartissent en 4 familles.
 
-Example table:
+### 1. Profil du client (5 variables)
 
-| Feature | Description | Type |
-|------|------|------|
-| age | Age of individual | Numerical |
-| income | Annual income | Numerical |
-| gender | Gender category | Categorical |
+| Variable | Description | Valeurs | Type |
+|------|------|------|------|
+| `LIMIT_BAL` | Plafond de crédit accordé au client (crédit individuel + crédit familial complémentaire) | 10 000 à 1 000 000 NT$ (médiane : 140 000) | Numérique |
+| `SEX` | Genre | 1 = homme (39,6 %), 2 = femme (60,4 %) | Catégorielle |
+| `EDUCATION` | Niveau d'études | 1 = master / doctorat, 2 = licence, 3 = lycée, 4 = autres ; 0, 5, 6 = non documentés | Catégorielle |
+| `MARRIAGE` | Situation familiale | 1 = marié, 2 = célibataire, 3 = autres ; 0 = non documenté | Catégorielle |
+| `AGE` | Âge du client | 21 à 79 ans (médiane : 34) | Numérique |
 
-✏️ **Insert your feature description table here**
+### 2. Historique de remboursement (6 variables)
 
----
+`PAY_1` à `PAY_6` indiquent, pour chacun des 6 derniers mois, **si le client a payé à temps ou avec combien de mois de retard**.
+
+| Variable | Mois concerné |
+|------|------|
+| `PAY_1` *(appelée `PAY_0` dans le fichier d'origine)* | Septembre 2005 |
+| `PAY_2` | Août 2005 |
+| `PAY_3` | Juillet 2005 |
+| `PAY_4` | Juin 2005 |
+| `PAY_5` | Mai 2005 |
+| `PAY_6` | Avril 2005 |
+
+| Code | Signification |
+|------|------|
+| -2 | Aucune consommation sur le mois |
+| -1 | Facture payée intégralement |
+| 0 | Paiement minimum effectué (crédit renouvelable, sans retard) |
+| 1 à 8 | Retard de paiement de 1 à 8 mois (9 = 9 mois ou plus) |
+
+### 3. Montants des relevés (6 variables)
+
+| Variable | Description | Valeurs (sept. 2005) | Type |
+|------|------|------|------|
+| `BILL_AMT1` … `BILL_AMT6` | Montant du relevé de carte de crédit, de septembre 2005 (`BILL_AMT1`) à avril 2005 (`BILL_AMT6`) | −165 580 à 964 511 NT$ (médiane : 22 382) | Numérique |
+
+### 4. Montants remboursés (6 variables)
+
+| Variable | Description | Valeurs (sept. 2005) | Type |
+|------|------|------|------|
+| `PAY_AMT1` … `PAY_AMT6` | Montant remboursé par le client, de septembre 2005 (`PAY_AMT1`) à avril 2005 (`PAY_AMT6`) | 0 à 873 552 NT$ (médiane : 2 100) | Numérique |
 
 ## Target Variable
 
-📌 **Instructions:**  
-Explain what the model is trying to predict.
+- **Nom :** `default payment next month` (renommée `DEFAULT` dans le code)
+- **Signification :** le client a-t-il fait défaut sur son paiement d'octobre 2005 ?
+- **Valeurs :**
+  - `0` = pas de défaut : 23 364 clients (77,9 %)
+  - `1` = défaut : 6 636 clients (22,1 %)
 
-Include:
-
-- Variable name
-- Meaning
-- Possible values (if classification)
-
-✏️ **Write your explanation here**
-
----
+Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de défaut (PD)**, transformée ensuite en décision à l'aide d'un seuil.
 
 ## Data Types
 
-📌 **Instructions:**  
-Describe the types of variables present in the dataset.
+| Type | Nombre | Variables | Traitement prévu |
+|------|------|------|------|
+| Numériques continues | 14 | `LIMIT_BAL`, `AGE`, `BILL_AMT1–6`, `PAY_AMT1–6` | Transformation log + standardisation (pour LR et MLP) |
+| Catégorielles nominales | 3 | `SEX`, `EDUCATION`, `MARRIAGE` | One-hot encoding (les codes sont des étiquettes, pas des grandeurs) |
+| Ordinales | 6 | `PAY_1–6` | Conservées telles quelles (l'ordre a un sens) |
+| Binaire (cible) | 1 | `default payment next month` | — |
 
-Examples:
+**Structure temporelle :** les blocs `PAY`, `BILL_AMT` et `PAY_AMT` décrivent les **6 mêmes mois** pour chaque client. On n'a pas une vraie série temporelle, mais on peut en tirer des indicateurs de tendance (nombre de mois en retard, évolution du solde).
 
-- Numerical
-- Categorical
-- Ordinal
-- Text
-- Time-series
+## Data Distribution     !!!!! A VOIR !!!!!!
 
-✏️ **Describe the column types here**
-
----
-
-## Data Distribution
-
-📌 **Instructions:**  
-Describe important distribution characteristics.
-
-Examples:
-
-- Class balance or imbalance
-- Skewed numerical variables
-- Range of key features
-
-✏️ **Describe the data distribution here**
-
----
+- **Classes déséquilibrées :** 22,1 % de défauts. Un modèle qui prédit toujours « pas de défaut » atteindrait 77,9 % d'accuracy sans détecter un seul défaut.
+- **Montants très asymétriques :** la plupart des clients ont des montants modestes et quelques-uns des montants très élevés. Par exemple, `PAY_AMT1` a une médiane de 2 100 NT$ mais un maximum de 873 552 NT$ (asymétrie de **XXXXX**).
+- **L'historique de retard est la variable la plus prédictive :**
+  - le taux de défaut passe de **13 %** pour un client qui paie le minimum (`PAY_1` = 0) à **34 %** avec 1 mois de retard et **69 %** avec 2 mois ;
+  - `PAY_1` est la variable la plus corrélée à la cible (+0,32), et l'effet diminue pour les mois plus anciens (+0,19 pour `PAY_6`).
+- **Un plafond élevé est associé à moins de défauts** (corrélation −0,15) : la banque accorde plus aux clients qu'elle juge solvables.
+- **Variables peu prédictives seules :** `AGE`, `SEX`, `EDUCATION`, `MARRIAGE` et les `BILL_AMT` ont des corrélations inférieures à 0,05 en valeur absolue avec la cible.
+- **Forte corrélation entre variables :** les `BILL_AMT` de deux mois consécutifs sont corrélés à 0,95. Cette redondance gêne l'interprétation de la régression logistique.
 
 ## Data Quality
 
-📌 **Instructions:**  
-Mention any issues found in the dataset.
+| Point vérifié | Constat | Décision (section 6) |
+|------|------|------|
+| Valeurs manquantes | Aucune | — |
+| Doublons | 35 lignes identiques (avec des `ID` différents) | Supprimées |
+| Codes non documentés | `EDUCATION` = 0, 5, 6 (345 clients) ; `MARRIAGE` = 0 (54 clients) | Regroupés dans « autres » |
+| Codes -2 et 0 de `PAY_x` | Absents de la documentation officielle, mais expliqués ensuite par l'auteur du dataset | Conservés |
+| Montants négatifs | 1 930 clients ont au moins un `BILL_AMT` négatif | Conservés : ce sont des soldes créditeurs, pas des erreurs |
+| Valeurs extrêmes | Montants élevés mais plausibles au vu des plafonds | Transformés (log) plutôt que supprimés |
+| Comptes inactifs | 795 clients sans aucune facture ni remboursement sur 6 mois | Conservés |
+| Variables sensibles | `SEX`, `AGE`, `MARRIAGE` sont des caractéristiques protégées | Modèles comparés avec et sans ces variables |
 
-Examples:
-
-- Missing values
-- Outliers
-- Imbalanced classes
-- Duplicate entries
-
-✏️ **Describe any data quality issues here**
-
----
 
 # 6. Data Preprocessing
 
