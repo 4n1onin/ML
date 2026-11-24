@@ -186,7 +186,7 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 ---
 
 # 6. Data Preprocessing
-
+---
 📌 **Instructions:**  
 Explain the preprocessing steps applied before modeling.
 
