@@ -36,9 +36,9 @@ Include:
 
 ✏️ **Write your description below:**
 
-Notre projet porte sur le risque de crédit : peut-on prédire si un client ne remboursera pas sa carte de crédit le mois suivant ? Nous utilisons le jeu de données Default of Credit Card Clients de l'UCI. Il décrit 30 000 clients d'une banque taïwanaise en 2005. Pour chaque client, on dispose du plafond de crédit, de quelques infos (sexe, âge, niveau d'études, situation familiale) et de six mois d'historique : retards de paiement, montants facturés et montants remboursés.
+Notre projet porte sur le risque de crédit : peut-on prédire le défaut de paiement d'un client d'une carte de crédit ?  Nous utilisons le jeu de données Default of Credit Card Clients de l'UCI. Il décrit 30 000 clients d'une banque taïwanaise en 2005. Pour chaque client, on dispose du plafond de crédit, de quelques infos (sexe, âge, niveau d'études, situation familiale) et de six mois d'historique : retards de paiement, montants facturés et montants remboursés.
 
-Le contexte est important : au milieu des années 2000, Taïwan a connu une crise des cartes de crédit. Les banques avaient distribué beaucoup de crédit sans vérifier assez la solvabilité des clients, et les impayés ont explosé. Le sujet nous intéresse parce que c'est un cas concret où une mauvaise décision coûte vite très cher. Il pose aussi un vrai défi de machine learning : seuls 22 % des clients environ font défaut, donc les classes sont déséquilibrées. Un modèle qui prédit « pas de défaut » pour tout le monde aurait 78 % de bonnes réponses tout en étant inutile.
+Le contexte est important : au milieu des années 2000, Taïwan a connu une crise des cartes de crédit. Les banques avaient distribué beaucoup de crédit sans vérifier assez la solvabilité des clients, et les impayés ont explosé. Le sujet nous intéresse parce que c'est un cas concret où une mauvaise décision coûte vite très cher. Notamment avec l'augmentation significative de l'utilisation des cartes des crédits. Il pose aussi un vrai défi de machine learning : seuls 22 % des clients environ font défaut, donc les classes sont déséquilibrées. Un modèle qui prédit « pas de défaut » pour tout le monde aurait 78 % de bonnes réponses tout en étant inutile.
 
 Plusieurs acteurs profiteraient d'une bonne solution :
 
