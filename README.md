@@ -187,7 +187,7 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 
 # 6. Data Preprocessing
 ---
-# 6. Data Preprocessing
+
 
 Toutes les étapes sont codées dans [`src/preprocessing.py`](src/preprocessing.py). Tous les notebooks utilisent ce même fichier, donc chaque modèle est entraîné sur des données préparées de façon identique.
 
