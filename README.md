@@ -53,8 +53,6 @@ Un modèle interprétable. Grâce à l'importance des variables et à SHAP, on v
 
 # 4. Task Definition
 
-# 4. Task Definition
-
 Le projet est un problème d'apprentissage supervisé : pour chaque client, on connaît son profil, ses 6 derniers mois de comportement de paiement et ce qui s'est passé ensuite (défaut ou non). Le modèle apprend à relier les deux pour prédire le risque de nouveaux clients.
 
 - **Task Type :** classification binaire supervisée, sur des données déséquilibrées (77,9 % de non-défauts, 22,1 % de défauts).
