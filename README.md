@@ -39,21 +39,6 @@ Les clients eux-mêmes, qui pourraient être contactés avant de se retrouver su
 
 # 3. Project Goal
 
-📌 **Instructions:**  
-Clearly explain **what the project aims to achieve**.
-
-Your answer should describe:
-
-- What the system predicts, classifies, or analyzes
-- What a successful solution looks like
-
-Example goals:
-
-- Predict housing prices from property features
-- Classify medical images into disease categories
-- Detect sentiment in text reviews
-- Forecast electricity consumption
-
 Il s'agit d'un problème de classification binaire : à partir des caractéristiques du client et de son historique sur six mois, prédire s'il fera défaut le mois suivant (1 = défaut, 0 = pas de défaut). Le modèle doit aussi donner une probabilité de défaut, pour que la banque puisse classer ses clients du moins risqué au plus risqué.
 
 Pour y arriver, nous partirons d'un modèle simple de référence, la régression logistique. Nous le comparerons ensuite à des modèles plus puissants : random forest, XGBoost et un petit réseau de neurones. Pour gérer le déséquilibre des classes, nous testerons la pondération des classes, le rééchantillonnage et l'ajustement du seuil de décision.
@@ -68,22 +53,33 @@ Un modèle interprétable. Grâce à l'importance des variables et à SHAP, on v
 
 # 4. Task Definition
 
-📌 **Instructions:**  
-Define the **machine learning or data analysis task**.
+# 4. Task Definition
 
-Specify:
+Le projet est un problème d'apprentissage supervisé : pour chaque client, on connaît son profil, ses 6 derniers mois de comportement de paiement et ce qui s'est passé ensuite (défaut ou non). Le modèle apprend à relier les deux pour prédire le risque de nouveaux clients.
 
-- **Task Type:** (classification, regression, clustering, etc.)
-- **Input:** What data is used as input
-- **Output:** What the model predicts
-- **Evaluation Metric:** How performance will be measured
+- **Task Type :** classification binaire supervisée, sur des données déséquilibrées (77,9 % de non-défauts, 22,1 % de défauts).
 
-✏️ **Fill in the following:**
+- **Input Variables :** 23 variables explicatives décrivant chaque client (30 000 clients) :
+  - *Profil* : `LIMIT_BAL` (plafond de crédit), `SEX`, `EDUCATION`, `MARRIAGE`, `AGE`
+  - *Historique de retard* : `PAY_1` à `PAY_6` (statut de paiement d'avril à septembre 2005)
+  - *Montants facturés* : `BILL_AMT1` à `BILL_AMT6`
+  - *Montants remboursés* : `PAY_AMT1` à `PAY_AMT6`
+  - *Variables construites* (section 6) : taux d'utilisation du crédit (`UTIL_MEAN`, `UTIL_LAST`), part de la facture remboursée (`PAY_RATIO_MEAN`), nombre de mois en retard (`N_MONTHS_LATE`), retard maximal (`MAX_DELAY`)
 
-- **Task Type:**  
-- **Input Variables:**  
-- **Target Variable:**  
-- **Evaluation Metric(s):**
+- **Target Variable :** `default payment next month` 
+  - `1` = le client fait défaut sur son paiement du mois suivant (octobre 2005)
+  - `0` = le client paie normalement
+  - **Sortie du modèle :** une probabilité de défaut (PD) entre 0 et 1, transformée en décision (défaut / pas défaut) à l'aide d'un seuil choisi par défaut à 0,5.
+
+- **Evaluation Metric(s) :**
+  - **ROC-AUC** *(métrique principale)* : mesure la capacité du modèle à classer les clients du plus risqué au moins risqué, sans dépendre du seuil. Adaptée aux données déséquilibrées (0,5 = hasard, 1 = parfait).
+  - **F1-score de la classe « défaut »** : moyenne harmonique de la précision (part des alertes qui sont de vrais défauts) et du rappel (part des défauts détectés). Elle évalue le modèle au seuil retenu.
+  - **Matrice de confusion** : montre concrètement les deux types d'erreur, les **défauts manqués** (FN) qui sont des pertes pour la banque et les **fausses alertes** (FP) qui sont de bons clients refusés, donc manque à gagner.
+
+- **Non sélection de l'accuracy** : Un modèle qui prédit toujours « pas de défaut » obtient 77,9 % d'accuracy sans détecter un seul défaut. Elle est donc pas utile, voire trompeuse sur ce problème.
+
+**Référence à battre :** la régression logistique (baseline) obtient une **ROC-AUC de XXXXX** et un **F1 de XXXXX** sur le jeu de test. Random Forest, XGBoost et le réseau de neurones devront faire mieux.
+
 
 ---
 
