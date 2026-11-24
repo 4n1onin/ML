@@ -62,7 +62,7 @@ Le projet est un problème d'apprentissage supervisé : pour chaque client, on c
   - *Historique de retard* : `PAY_1` à `PAY_6` (statut de paiement d'avril à septembre 2005)
   - *Montants facturés* : `BILL_AMT1` à `BILL_AMT6`
   - *Montants remboursés* : `PAY_AMT1` à `PAY_AMT6`
-  - *Variables construites* (section 6) : taux d'utilisation du crédit (`UTIL_MEAN`, `UTIL_LAST`), part de la facture remboursée (`PAY_RATIO_MEAN`), nombre de mois en retard (`N_MONTHS_LATE`), retard maximal (`MAX_DELAY`)
+
 
 - **Target Variable :** `default payment next month` 
   - `1` = le client fait défaut sur son paiement du mois suivant (octobre 2005)
