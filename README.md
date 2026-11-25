@@ -288,11 +288,6 @@ Avec 22,1 % de défauts, un modèle non corrigé privilégie la classe majoritai
 | Train / Test | — | 23 972 / 5 993 (22,1 % de défauts dans chacun) |
 
 
-```
-
-```
-
-```
 
 # 7. Modeling Approach
 
