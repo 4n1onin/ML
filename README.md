@@ -287,10 +287,7 @@ Avec 22,1 % de défauts, un modèle non corrigé privilégie la classe majoritai
 | Colonnes en entrée des modèles (LR / MLP) | — | 31 (après one-hot encoding) |
 | Train / Test | — | 23 972 / 5 993 (22,1 % de défauts dans chacun) |
 
-Pour lancer le prétraitement seul :
 
-```bash
-python src/preprocessing.py data/default_of_credit_card_clients.xls
 ```
 
 ---
