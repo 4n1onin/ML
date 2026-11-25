@@ -290,7 +290,6 @@ Avec 22,1 % de défauts, un modèle non corrigé privilégie la classe majoritai
 
 ```
 
----
 
 # 7. Modeling Approach
 
