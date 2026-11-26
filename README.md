@@ -45,7 +45,7 @@ Pour y arriver, nous partirons d'un modèle simple de référence, la régressio
 
 Une solution réussie, c'est :
 
-De bonnes performances sur les bonnes métriques. On regardera l'AUC, le F1-score et la matrice de confusion plutôt que l'accuracy, et surtout un bon rappel sur les défauts : rater un client qui fera défaut coûte plus cher à la banque qu'une fausse alerte.
+De bonnes performances sur les bonnes métriques. On regardera l'AUC, le F1-score et la matrice de confusion plutôt que l'accuracy, et surtout un bon recall sur les défauts : rater un client qui fera défaut coûte plus cher à la banque qu'une fausse alerte.
 Une nette amélioration par rapport à la régression logistique.
 Un modèle interprétable. Grâce à l'importance des variables et à SHAP, on veut pouvoir expliquer quelles variables pèsent le plus dans le risque. On s'attend à ce que les retards de paiement récents et le taux d'utilisation du crédit ressortent en premier.
 
@@ -71,7 +71,7 @@ Le projet est un problème d'apprentissage supervisé : pour chaque client, on c
 
 - **Evaluation Metric(s) :**
   - **ROC-AUC** *(métrique principale)* : mesure la capacité du modèle à classer les clients du plus risqué au moins risqué, sans dépendre du seuil. Adaptée aux données déséquilibrées (0,5 = hasard, 1 = parfait).
-  - **F1-score de la classe « défaut »** : moyenne harmonique de la précision (part des alertes qui sont de vrais défauts) et du rappel (part des défauts détectés). Elle évalue le modèle au seuil retenu.
+  - **F1-score de la classe « défaut »** : moyenne harmonique de la précision (part des alertes qui sont de vrais défauts) et du recall (part des défauts détectés). Elle évalue le modèle au seuil retenu.
   - **Matrice de confusion** : montre concrètement les deux types d'erreur, les défauts manqués (FN) qui sont des pertes pour la banque et les fausses alertes (FP) qui sont de bons clients refusés, donc manque à gagner.
 
 - **Non sélection de l'accuracy** : Un modèle qui prédit toujours « pas de défaut » obtient 77,9 % d'accuracy sans détecter un seul défaut. Elle est donc pas utile, voire trompeuse sur ce problème.
@@ -237,64 +237,51 @@ Le scaling est ajusté sur le train uniquement, puis appliqué au test, pour év
 | Colonnes après one-hot encoding | — | 30 |
 | Train / Test | — | 23 972 / 5 993 |
 
+---
 
 # 7. Modeling Approach
 
-📌 **Instructions:**  
-Explain how you solved the problem.
-
----
-
 ## Chosen Models
 
-List the models or algorithms used.
+- **Régression logistique** : modèle linéaire simple, utilisé comme baseline.
 
-Examples:
-
-- Linear Regression
-- Logistic Regression
-- Random Forest
-- Gradient Boosting
-- Neural Networks
-
-✏️ **List and describe the models used**
+**(rajoutez vos modèles ici également.)**
 
 ---
 
 ## Modeling Strategy
 
-📌 **Instructions:**  
-Explain:
-
-- Why you selected these models
-- Whether you used a baseline model
-- If hyperparameter tuning was performed
-- Whether cross-validation was used
-
-✏️ **Explain your modeling strategy**
+- Séparation train / test (80 / 20), stratifiée
+- Régression logistique utilisée comme baseline
+- Gestion du déséquilibre : `class_weight="balanced"`
+- Validation croisée à 5 plis sur le train pour choisir le seuil de décision
+- Seuil retenu : 0,62 (au lieu de 0,5), celui qui maximise le F1
+- Pas de réglage des hyperparamètres pour la baseline
 
 ---
 
 ## Evaluation Metrics
 
-📌 **Instructions:**  
-Specify the metrics used to evaluate model performance.
+- **ROC-AUC** → métrique principale, adaptée aux données déséquilibrées
+- **F1-score** → moyenne armonique entre précision et recall
+- **Matrice de confusion** → montre les défauts manqués et les fausses alertes
 
-Examples:
-
-- Accuracy
-- Precision / Recall
-- F1-score
-- ROC-AUC
-- Mean Absolute Error
-- RMSE
-
-Also explain **why these metrics are appropriate**.
-
-✏️ **Describe your evaluation metrics**
+L'accuracy n'est pas utilisée : prédire toujours « pas de défaut » donne 78 % sans détecter aucun défaut.
 
 ---
 
+## Results
+
+### Régression logistique (baseline)
+- AUC : 0,761
+- F1 : 0,526
+- Recall : 0,540 (716 défauts détectés sur 1 326)
+- Précision : 0,514
+
+
+
+
+---
 # 8. Project Structure
 
 📌 **Instructions:**  
