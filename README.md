@@ -67,16 +67,16 @@ Le projet est un problème d'apprentissage supervisé : pour chaque client, on c
 - **Target Variable :** `default payment next month` 
   - `1` = le client fait défaut sur son paiement du mois suivant (octobre 2005)
   - `0` = le client paie normalement
-  - **Sortie du modèle :** une probabilité de défaut (PD) entre 0 et 1, transformée en décision (défaut / pas défaut) à l'aide d'un seuil choisi par défaut à 0,5.
+  - **Sortie du modèle :** une probabilité de défaut (PD) entre 0 et 1, transformée en décision (défaut / pas défaut) à l'aide d'un seuil choisi par défaut à 0,5 puis à l'aide d'un seuil qui maximise le F1.
 
 - **Evaluation Metric(s) :**
   - **ROC-AUC** *(métrique principale)* : mesure la capacité du modèle à classer les clients du plus risqué au moins risqué, sans dépendre du seuil. Adaptée aux données déséquilibrées (0,5 = hasard, 1 = parfait).
   - **F1-score de la classe « défaut »** : moyenne harmonique de la précision (part des alertes qui sont de vrais défauts) et du rappel (part des défauts détectés). Elle évalue le modèle au seuil retenu.
-  - **Matrice de confusion** : montre concrètement les deux types d'erreur, les **défauts manqués** (FN) qui sont des pertes pour la banque et les **fausses alertes** (FP) qui sont de bons clients refusés, donc manque à gagner.
+  - **Matrice de confusion** : montre concrètement les deux types d'erreur, les défauts manqués (FN) qui sont des pertes pour la banque et les fausses alertes (FP) qui sont de bons clients refusés, donc manque à gagner.
 
 - **Non sélection de l'accuracy** : Un modèle qui prédit toujours « pas de défaut » obtient 77,9 % d'accuracy sans détecter un seul défaut. Elle est donc pas utile, voire trompeuse sur ce problème.
 
-**Référence à battre :** la régression logistique (baseline) obtient une **ROC-AUC de XXXXX** et un **F1 de XXXXX** sur le jeu de test. Random Forest, XGBoost et le réseau de neurones devront faire mieux.
+**Référence à battre :** la régression logistique (baseline) obtient une ROC-AUC de 0,76 et un F1 de 0,526 sur le jeu de test. Random Forest, XGBoost et le réseau de neurones devront faire mieux.
 
 
 ---
@@ -107,11 +107,11 @@ Les 23 variables explicatives se répartissent en 4 familles.
 
 ### 2. Historique de remboursement (6 variables)
 
-`PAY_1` à `PAY_6` indiquent, pour chacun des 6 derniers mois, **si le client a payé à temps ou avec combien de mois de retard**.
+`PAY_1` à `PAY_6` indiquent, pour les 6 derniers mois, si le client a payé à temps ou avec combien de mois de retard.
 
 | Variable | Mois concerné |
 |------|------|
-| `PAY_1` *(appelée `PAY_0` dans le fichier d'origine)* | Septembre 2005 |
+| `PAY_1` *(appelée `PAY_0` dans initialement)* | Septembre 2005 |
 | `PAY_2` | Août 2005 |
 | `PAY_3` | Juillet 2005 |
 | `PAY_4` | Juin 2005 |
@@ -145,7 +145,7 @@ Les 23 variables explicatives se répartissent en 4 familles.
   - `0` = pas de défaut : 23 364 clients (77,9 %)
   - `1` = défaut : 6 636 clients (22,1 %)
 
-Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de défaut (PD)**, transformée ensuite en décision à l'aide d'un seuil.
+Le modèle ne prédit pas seulement 0 ou 1 : il estime une probabilité de défaut transformée ensuite en décision à l'aide d'un seuil.
 
 ## Data Types
 
@@ -158,10 +158,10 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 
 **Structure temporelle :** les blocs `PAY`, `BILL_AMT` et `PAY_AMT` décrivent les **6 mêmes mois** pour chaque client. On n'a pas une vraie série temporelle, mais on peut en tirer des indicateurs de tendance (nombre de mois en retard, évolution du solde).
 
-## Data Distribution     !!!!! A VOIR !!!!!!
+## Data Distribution   
 
 - **Classes déséquilibrées :** 22,1 % de défauts. Un modèle qui prédit toujours « pas de défaut » atteindrait 77,9 % d'accuracy sans détecter un seul défaut.
-- **Montants très asymétriques :** la plupart des clients ont des montants modestes et quelques-uns des montants très élevés. Par exemple, `PAY_AMT1` a une médiane de 2 100 NT$ mais un maximum de 873 552 NT$ (asymétrie de **XXXXX**).
+- **Montants très asymétriques :** la plupart des clients ont des montants modestes et quelques-uns des montants très élevés. Par exemple, `PAY_AMT1` a une médiane de 2 100 NT$ mais un maximum de 873 552 NT$ (asymétrie de 14,7).
 - **L'historique de retard est la variable la plus prédictive :**
   - le taux de défaut passe de **13 %** pour un client qui paie le minimum (`PAY_1` = 0) à **34 %** avec 1 mois de retard et **69 %** avec 2 mois ;
   - `PAY_1` est la variable la plus corrélée à la cible (+0,32), et l'effet diminue pour les mois plus anciens (+0,19 pour `PAY_6`).
@@ -180,113 +180,62 @@ Le modèle ne prédit pas seulement 0 ou 1 : il estime une **probabilité de dé
 | Montants négatifs | 1 930 clients ont au moins un `BILL_AMT` négatif | Conservés : ce sont des soldes créditeurs, pas des erreurs |
 | Valeurs extrêmes | Montants élevés mais plausibles au vu des plafonds | Transformés (log) plutôt que supprimés |
 | Comptes inactifs | 795 clients sans aucune facture ni remboursement sur 6 mois | Conservés |
-| Variables sensibles | `SEX`, `AGE`, `MARRIAGE` sont des caractéristiques protégées | Modèles comparés avec et sans ces variables |
+
 
 
 ---
-
 # 6. Data Preprocessing
----
 
-## 6.1 Chargement et mise en forme
+Toutes les étapes sont codées ici: [`data/credit_risk_logistic_regression.ipynb`](data/credit_risk_logistic_regression.ipynb).
 
-- **Lecture du fichier :** le fichier UCI a **deux lignes d'en-tête** (`X1 … X23`, puis les vrais noms). On lit donc les noms sur la 2ᵉ ligne (`header=1`).
-- **Renommage :** `PAY_0` → `PAY_1` et `default payment next month` → `DEFAULT`.
-  *Pourquoi :* dans le fichier d'origine, la série de retards commence à `PAY_0` mais les montants commencent à `BILL_AMT1` et `PAY_AMT1`, alors que ces trois colonnes portent sur le même mois (septembre 2005). Le renommage aligne les numéros et évite les erreurs.
-- **Suppression de `ID` :** *Pourquoi :* un numéro de client ne contient aucune information sur le risque. Le garder pourrait faire apprendre au modèle une corrélation artificielle.
+## 6.1 Chargement et nettoyage
 
-## 6.2 Valeurs manquantes
+- **Lecture :** le fichier UCI a deux lignes d'en-tête, on lit les noms sur la 2ᵉ (`header=1`).
+- **Renommage :** `PAY_0` → `PAY_1` (même mois que `BILL_AMT1` et `PAY_AMT1`) et la cible → `DEFAULT`.
+- **Suppression de `ID` :** un numéro de client ne dit rien sur le risque.
+- **Valeurs manquantes :** aucune, donc pas d'imputation.
+- **Doublons :** 35 lignes supprimées (29 965 clients restants), pour qu'un même client ne soit pas à la fois dans le train et le test (fuite de données).
+- **Codes non documentés :** `EDUCATION` 0, 5, 6 → 4 (« autres ») ; `MARRIAGE` 0 → 3 (« autres »). Ces catégories sont trop petites pour être bien apprises.
+- **Conservés volontairement :** les codes -2 et 0 de `PAY_x` (ils ont un sens), les `BILL_AMT` négatifs (soldes créditeurs) et les valeurs extrêmes (reste possible).
 
-Le dataset ne contient **aucune valeur manquante**, donc aucune imputation n'est nécessaire.
-Les seules valeurs manquantes possibles apparaissent lors de la création de ratios (division par une facture nulle). Elles sont traitées directement dans le calcul (voir 6.6).
+## 6.2 Feature engineering
 
-## 6.3 Doublons
-
-**35 lignes** sont identiques sur toutes les variables (avec des `ID` différents). Elles sont supprimées, ce qui laisse 29 965 clients.
-*Pourquoi :* si une même ligne se retrouve à la fois dans le train et dans le test, le modèle est évalué sur un client qu'il a déjà vu, ce qui gonfle artificiellement les scores (**fuite de données**). Retirer 0,1 % des données ne coûte rien.
-
-## 6.4 Nettoyage des variables catégorielles
-
-| Variable | Problème | Traitement |
+| Variable | Calcul | Ce qu'elle mesure |
 |------|------|------|
-| `EDUCATION` | Codes 0, 5 et 6 non documentés (345 clients) | Regroupés avec 4 = « autres » |
-| `MARRIAGE` | Code 0 non documenté (54 clients) | Regroupé avec 3 = « autres » |
+| `UTIL_MEAN` | moyenne de `BILL_AMT` / `LIMIT_BAL` | utilisation moyenne du crédit |
+| `PAY_RATIO` | `PAY_AMT1` / `BILL_AMT2`, borné entre 0 et 1 | part de la facture d'août remboursée en septembre |
+| `N_MONTHS_LATE` | nombre de mois avec `PAY_x` > 0 | fréquence des retards |
+| `MAX_DELAY` | plus grand `PAY_x` | gravité du pire retard |
 
-*Pourquoi :* ces codes n'ont pas de signification connue et concernent très peu de clients. Des catégories aussi petites seraient mal apprises par les modèles et rendraient les résultats instables.
 
-**Valeurs conservées volontairement :**
-- **Codes -2 et 0 de `PAY_x`** : ils ont un sens (pas de consommation / paiement minimum). On garde `PAY_x` comme variable **ordinale** de -2 à 8, car l'ordre « payé → minimum → retard » reflète un risque croissant.
-- **Montants `BILL_AMT` négatifs** (1 930 clients) : ce sont des soldes créditeurs (le client a trop payé), donc une vraie information sur son comportement, pas une erreur.
-- **Valeurs extrêmes** : elles sont plausibles au vu des plafonds (jusqu'à 1 000 000 NT$). On les transforme (6.7) au lieu de les supprimer, pour ne pas perdre les clients aux gros montants.
+## 6.3 Séparation train / test
 
-## 6.5 Encodage des variables catégorielles
+- **80 % train (23 972 clients) / 20 % test (5 993 clients)**, `random_state=42`.
+- **Split stratifié** : 22,1 % de défauts dans les deux échantillons, pour un test représentatif.
+- Le test n'est utilisé qu'à la toute fin. Le choix du seuil se fait par **validation croisée à 5 plis** sur le train.
 
-`SEX`, `EDUCATION` et `MARRIAGE` sont transformées par **one-hot encoding** (une colonne 0/1 par catégorie, en retirant la première pour éviter la redondance).
-*Pourquoi :* ces variables sont **nominales**. Leurs codes sont des étiquettes, pas des grandeurs. Laisser `MARRIAGE` en 1/2/3 ferait croire à un modèle linéaire que « célibataire (2) » vaut deux fois « marié (1) ».
-Les `PAY_x`, eux, ne sont **pas** encodés en one-hot : leur ordre a un sens et doit être conservé.
+## 6.4 Encodage et mise à l'échelle
 
-## 6.6 Feature engineering
+1. **One-hot encoding** de `SEX`, `EDUCATION`, `MARRIAGE` : ce sont des étiquettes, pas des grandeurs.
+2. **Log** (`log(1 + x)`) sur `LIMIT_BAL` et les `PAY_AMT` : ces montants sont très asymétriques (asymétrie jusqu'à 14,7). Les `BILL_AMT` pouvant être négatifs, on ne leur applique pas le log.
+3. **Standardisation** (`StandardScaler`) : nécessaire pour la régression logistique et le MLP. 
 
-On crée 5 variables métier qui résument le comportement du client sur les 6 mois.
+Le scaling est ajusté sur le train uniquement, puis appliqué au test, pour éviter toute fuite de données.
 
-| Nouvelle variable | Calcul | Ce qu'elle mesure |
-|------|------|------|
-| `UTIL_MEAN` | Moyenne de `BILL_AMTi / LIMIT_BAL` sur 6 mois | Taux d'utilisation moyen du crédit |
-| `UTIL_LAST` | `BILL_AMT1 / LIMIT_BAL` | Taux d'utilisation le plus récent |
-| `PAY_RATIO_MEAN` | Moyenne de `PAY_AMTi / BILL_AMT(i+1)`, bornée entre 0 et 1 | Part de la facture précédente effectivement remboursée |
-| `N_MONTHS_LATE` | Nombre de mois avec `PAY_x` > 0 | Fréquence des retards |
-| `MAX_DELAY` | Plus grand retard observé sur 6 mois | Gravité du pire retard |
+## 6.5 Déséquilibre des classes
 
-*Pourquoi :* les montants bruts sont peu liés au défaut (les corrélations des `BILL_AMT` sont proches de 0). Ce qui compte pour une banque, c'est **le montant rapporté au plafond** et **la part effectivement remboursée**.
-Ces variables ont aussi un sens économique clair, ce qui facilite l'interprétation.
+- `class_weight="balanced"` : une erreur sur un défaut pèse environ 3,5 fois plus pendant l'entraînement.
+- **Ajustement du seuil de décision** pour maximiser le F1, au lieu de 0,5.
+- Le **test n'est jamais rééquilibré** : le modèle doit être évalué sur une population réaliste (22 % de défauts).
 
-**Résultat :** `N_MONTHS_LATE` atteint une corrélation de **+0,40** avec le défaut, plus que n'importe quelle variable d'origine (`PAY_1` : +0,32). Le taux de défaut passe de **12 %** pour les clients jamais en retard à **70 %** pour ceux en retard les 6 mois.
-
-*Détail technique :* `PAY_AMTi` rembourse la facture du mois précédent, d'où le rapport à `BILL_AMT(i+1)`. Quand cette facture est nulle ou négative, il n'y a rien à rembourser et le ratio vaut 1.
-
-## 6.7 Séparation train / test
-
-- **80 % train (23 972 clients) / 20 % test (5 993 clients)**, avec `random_state=42` pour que les résultats soient reproductibles.
-- **Split stratifié** sur `DEFAULT` : le taux de défaut est de 22,1 % dans les deux échantillons.
-*Pourquoi :* sans stratification, le test pourrait contenir par hasard plus ou moins de défauts que la réalité, ce qui fausserait l'évaluation.
-- Le **test n'est plus utilisé** jusqu'à l'évaluation finale. Le réglage des hyperparamètres et le choix du seuil se font par **validation croisée stratifiée à 5 plis** sur le train.
-
-## 6.8 Transformation et mise à l'échelle
-
-Cette étape concerne la **régression logistique** et le **réseau de neurones (MLP)**. Random Forest et XGBoost utilisent les données sans transformation.
-
-1. **Transformation logarithmique** `sign(x) · log(1 + |x|)` sur `LIMIT_BAL`, `BILL_AMT1–6` et `PAY_AMT1–6`.
-   *Pourquoi :* ces montants sont très asymétriques (asymétrie jusqu'à 14,7). Le log réduit l'effet des valeurs extrêmes. La version avec `sign` permet de traiter aussi les montants négatifs.
-2. **Standardisation** (`StandardScaler`) : chaque variable est ramenée à une moyenne de 0 et un écart-type de 1.
-   *Pourquoi :* la régression logistique régularisée et le MLP sont sensibles à l'échelle. Sans standardisation, `LIMIT_BAL` (en centaines de milliers) écraserait `AGE` (en dizaines). Pour le MLP, c'est aussi nécessaire pour que l'entraînement converge.
-   Les arbres de décision, eux, ne comparent les valeurs qu'à des seuils : l'échelle ne change rien pour eux.
-
-⚠️ **Le scaler est ajusté uniquement sur le train**, puis appliqué au test. Il est placé dans un `Pipeline` avec le modèle, et donc ré-ajusté dans chaque pli de la validation croisée.
-*Pourquoi :* calculer la moyenne et l'écart-type sur toutes les données ferait passer de l'information du test dans l'entraînement (fuite de données).
-
-## 6.9 Traitement du déséquilibre des classes
-
-Avec 22,1 % de défauts, un modèle non corrigé privilégie la classe majoritaire et **rate la plupart des défauts**. On corrige ce déséquilibre **uniquement pendant l'entraînement** :
-
-| Méthode | Modèles | Principe |
-|------|------|------|
-| `class_weight="balanced"` | Régression logistique, Random Forest | Une erreur sur un défaut pèse environ 3,5 fois plus dans la fonction de perte |
-| `scale_pos_weight ≈ 3,52` | XGBoost | Même principe (rapport non-défauts / défauts du train) |
-| SMOTE *(variante testée)* | Tous | Création de défauts synthétiques, appliquée **dans chaque pli** de validation croisée |
-| Ajustement du seuil de décision | Tous | Seuil choisi pour maximiser le F1, au lieu de 0,5 |
-
-⚠️ **Le test n'est jamais rééquilibré.**
-*Pourquoi :* le modèle sera utilisé sur une population réelle avec environ 22 % de défauts. Il doit être évalué dans ces conditions. Rééquilibrer **avant** le split (par exemple en dupliquant des défauts) placerait des copies des mêmes clients dans le train et le test, et produirait des scores artificiellement élevés.
-
-## 6.10 Résultat du prétraitement
+## 6.6 Résultat
 
 | | Avant | Après |
 |------|------|------|
 | Clients | 30 000 | 29 965 |
-| Variables explicatives | 23 | 28 (23 d'origine + 5 construites) |
-| Colonnes en entrée des modèles (LR / MLP) | — | 31 (après one-hot encoding) |
-| Train / Test | — | 23 972 / 5 993 (22,1 % de défauts dans chacun) |
-
+| Variables explicatives | 23 | 27 (23 + 4 construites) |
+| Colonnes après one-hot encoding | — | 30 |
+| Train / Test | — | 23 972 / 5 993 |
 
 
 # 7. Modeling Approach
