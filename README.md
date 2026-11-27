@@ -244,6 +244,7 @@ Le scaling est ajusté sur le train uniquement, puis appliqué au test, pour év
 ## Chosen Models
 
 - **Régression logistique** : modèle linéaire simple, utilisé comme baseline.
+- **K plus proches voisins (KNN)** : la probabilité de défaut d'un client est la part de défauts parmi ses *k* voisins les plus proches dans le train. Même prétraitement que la LR (indispensable : le KNN repose sur des distances). Code : partie 2 de [`data/credit_risk_logistic_regression.ipynb`](data/credit_risk_logistic_regression.ipynb).
 
 **(rajoutez vos modèles ici également.)**
 
@@ -277,6 +278,17 @@ L'accuracy n'est pas utilisée : prédire toujours « pas de défaut » donne 78
 - F1 : 0,526
 - Recall : 0,540 (716 défauts détectés sur 1 326)
 - Précision : 0,514
+
+### KNN
+- Hyperparamètres choisis par validation croisée à 5 plis sur le train (critère : ROC-AUC) : *k* = 250, distance de Manhattan, pondération uniforme
+- Sélection des variables pas à pas (ajout à chaque étape de la variable qui fait le plus monter l'AUC en validation croisée), nombre de variables fixé par la règle d'un écart-type : 6 variables (`N_MONTHS_LATE`, `UTIL_MEAN`, `PAY_1`, `BILL_AMT1`, `BILL_AMT5`, `MAX_DELAY`). Elles font aussi bien que les 17 variables d'un filtre par corrélation (AUC test 0,766 contre 0,769, écart non significatif)
+- Déséquilibre géré par le seuil (pas de `class_weight` pour le KNN) : 0,27, celui qui maximise le F1 en validation croisée
+- AUC : 0,766
+- F1 : 0,530
+- Recall : 0,578 (767 défauts détectés sur 1 326)
+- Précision : 0,489
+- Qualité des probabilités (méthodes du papier de Yeh & Lien) : area ratio 0,532 ; régression *Sorting Smoothing Method* B = 0,959, A = 0,006, R² = 0,947 ; Brier 0,137. Les PD du KNN sont réalistes, contrairement à celles de la LR `balanced`, qui les surestime (PD moyenne 0,44 pour un taux réel de 0,22)
+- Variables les plus importantes (permutation en validation croisée) : `MAX_DELAY`, `UTIL_MEAN`, `BILL_AMT5`, `PAY_1`
 
 
 
