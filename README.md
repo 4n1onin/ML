@@ -288,7 +288,7 @@ L'accuracy n'est pas utilisée : prédire toujours « pas de défaut » donne 78
 - Recall : 0,578 (767 défauts détectés sur 1 326)
 - Précision : 0,489
 - Qualité des probabilités (méthodes du papier de Yeh & Lien) : area ratio 0,532 ; régression *Sorting Smoothing Method* B = 0,959, A = 0,006, R² = 0,947 ; Brier 0,137. Les PD du KNN sont réalistes, contrairement à celles de la LR `balanced`, qui les surestime (PD moyenne 0,44 pour un taux réel de 0,22)
-- Variables les plus importantes (permutation en validation croisée) : `MAX_DELAY`, `UTIL_MEAN`, `BILL_AMT5`, `PAY_1`
+- Contribution des variables (on retire la variable, on ré-entraîne et on mesure la baisse d'AUC en validation croisée) : les retards de paiement dominent (baisse de 0,13 si on les retire tous), puis le niveau de dette (0,05). Prises une à une, `PAY_1` et `UTIL_MEAN` apportent le plus d'information propre
 
 
 
